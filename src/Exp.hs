@@ -16,8 +16,6 @@ import Data.Proof.EQ
 import Data.Ty
 import Data.TReify
 
--- #include "Typeable.h"
-
 {--------------------------------------------------------------------
     Expressions
 --------------------------------------------------------------------}
@@ -63,13 +61,6 @@ parens :: String -> String
 parens = ("(" ++) . (++ ")")
 
 
--- These Typeable instances don't work, because the first parameter to E
--- and N is higher-kinded.
-
--- INSTANCE_TYPEABLE2(N,nodeTc,"N")
--- INSTANCE_TYPEABLE2(E,expTC ,"E")
-
-
 instance MuRef (E v) where
   type DeRef (E v)    = N
   mapDeRef _ (Op o)   = pure $ ON o
@@ -82,6 +73,7 @@ notSupp meth = error $ "mapDeRef on E: "++meth++" not supported"
 
 -- TODO: Consider splitting Let/Var off from E.  Then E wouldn't need the
 -- v parameter.
+-- 
 -- I could use N and Mu to define an E without Let & Var and then use a
 -- standard MuRef instance and a standard extension to include Let & Var.
 -- Wouldn't be as convenient for simplification rules, because of the
@@ -215,25 +207,73 @@ e1 = 3 + 5 :: E V Integer
 e2 = e1 * e1
 e3 = 3 + 3 :: E V Integer
 
+
+{-
+  > e1
+  ((Add 3) 5)
+  > reifyGraph e1
+  let [x0 = App x1 x4,x4 = ON 5,x1 = App x2 x3,x3 = ON 3,x2 = ON Add] in x0
+  > ssa e1
+  let x2 = Add in let x3 = 3 in let x1 = (x2 x3) in let x4 = 5 in let x0 = (x1 x4) in x0
+  > cse e1
+  ((Add 3) 5)
+  > ssa e1
+  let x2 = Add in let x3 = 3 in let x1 = (x2 x3) in let x4 = 5 in let x0 = (x1 x4) in x0
+  > cse e1
+  ((Add 3) 5)
+
+  > e2
+  ((Mul ((Add 3) 5)) ((Add 3) 5))
+  > reifyGraph e2
+  let [x0 = App x1 x3,x1 = App x2 x3,x3 = App x4 x7,x7 = ON 5,x4 = App x5 x6,x6 = ON 3,x5 = ON Add,x2 = ON Mul] in x0
+  > ssa e2
+  let x2 = Mul in let x5 = Add in let x6 = 3 in let x4 = (x5 x6) in let x7 = 5 in let x3 = (x4 x7) in let x1 = (x2 x3) in let x0 = (x1 x3) in x0
+  > cse e2
+  let x3 = ((Add 3) 5) in ((Mul x3) x3)
+
+  > e3
+  ((Add 3) 3)
+  > reifyGraph e3
+  let [x0 = App x1 x3,x1 = App x2 x3,x3 = ON 3,x2 = ON Add] in x0
+  > 
+  > ssa e3
+  let x2 = Add in let x3 = 3 in let x1 = (x2 x3) in let x0 = (x1 x3) in x0
+  > cse e3
+  ((Add 3) 3)
+-}
+
 test :: Int -> E V Integer
 test n = iterate sqr e1 !! n
 
--- test reifications
-g1 = reifyGraph e1
-g2 = reifyGraph e2
-g3 = reifyGraph e3
+{-
+  > test 2
+  ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5)))
+  > reifyGraph (test 2)
+  let [x0 = App x1 x3,x1 = App x2 x3,x3 = App x4 x6,x4 = App x5 x6,x6 = App x7 x10,x10 = ON 5,x7 = App x8 x9,x9 = ON 3,x8 = ON Add,x5 = ON Mul,x2 = ON Mul] in x0
+  > ssa (test 2)
+  let x2 = Mul in let x5 = Mul in let x8 = Add in let x9 = 3 in let x7 = (x8 x9) in let x10 = 5 in let x6 = (x7 x10) in let x4 = (x5 x6) in let x3 = (x4 x6) in let x1 = (x2 x3) in let x0 = (x1 x3) in x0
+  > cse (test 2)
+  let x6 = ((Add 3) 5) in let x3 = ((Mul x6) x6) in ((Mul x3) x3)
 
-gtest = reifyGraph . test
-
-g4 = test 5
-
--- *TEReify> g4
--- let [(1,App 2 4),(2,App 3 4),(4,App 5 7),(5,App 6 7),(7,App 8 10),(8,App 9 10),(10,App 11 13),(11,App 12 13),(13,App 14 16),(14,App 15 16),(16,App 17 20),(20,Lit 5),(17,App 18 19),(19,Lit 3),(18,Lit Add),(15,Lit Mul),(12,Lit Mul),(9,Lit Mul),(6,Lit Mul),(3,Lit Mul)] in 1
+  > test 5
+  ((Mul ((Mul ((Mul ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5)))) ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5))))) ((Mul ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5)))) ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5)))))) ((Mul ((Mul ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5)))) ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5))))) ((Mul ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5)))) ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5))))))
+  > reifyGraph (test 5)
+  let [x0 = App x1 x3,x1 = App x2 x3,x3 = App x4 x6,x4 = App x5 x6,x6 = App x7 x9,x7 = App x8 x9,x9 = App x10 x12,x10 = App x11 x12,x12 = App x13 x15,x13 = App x14 x15,x15 = App x16 x19,x19 = ON 5,x16 = App x17 x18,x18 = ON 3,x17 = ON Add,x14 = ON Mul,x11 = ON Mul,x8 = ON Mul,x5 = ON Mul,x2 = ON Mul] in x0
+  > ssa (test 5)
+  let x2 = Mul in let x5 = Mul in let x8 = Mul in let x11 = Mul in let x14 = Mul in let x17 = Add in let x18 = 3 in let x16 = (x17 x18) in let x19 = 5 in let x15 = (x16 x19) in let x13 = (x14 x15) in let x12 = (x13 x15) in let x10 = (x11 x12) in let x9 = (x10 x12) in let x7 = (x8 x9) in let x6 = (x7 x9) in let x4 = (x5 x6) in let x3 = (x4 x6) in let x1 = (x2 x3) in let x0 = (x1 x3) in x0
+  > cse (test 5)
+  let x15 = ((Add 3) 5) in let x12 = ((Mul x15) x15) in let x9 = ((Mul x12) x12) in let x6 = ((Mul x9) x9) in let x3 = ((Mul x6) x6) in ((Mul x3) x3)
+-}
 
 e5 = e1 ^ (29 :: Integer)
-g5 = reifyGraph e5
 
--- *TEReify> g5
--- let [(21,App 22 41),(41,App 42 44),(44,App 45 36),(45,App 46 30),(46,Lit Mul),(42,App 43 27),(43,Lit Mul),(22,App 23 24),(24,App 25 27),(25,App 26 27),(27,App 28 30),(28,App 29 30),(30,App 31 33),(31,App 32 33),(33,App 34 36),(34,App 35 36),(36,App 37 40),(40,Lit 5),(37,App 38 39),(39,Lit 3),(38,Lit Add),(35,Lit Mul),(32,Lit Mul),(29,Lit Mul),(26,Lit Mul),(23,Lit Mul)] in 21
-
-
+{-
+  > e5
+  ((Mul ((Mul ((Mul ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5)))) ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5))))) ((Mul ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5)))) ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5)))))) ((Mul ((Mul ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5)))) ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5))))) ((Mul ((Mul ((Mul ((Add 3) 5)) ((Add 3) 5))) ((Mul ((Add 3) 5)) ((Add 3) 5)))) ((Add 3) 5))))
+  > reifyGraph e5
+  let [x0 = App x1 x20,x20 = App x21 x23,x23 = App x24 x15,x24 = App x25 x9,x25 = ON Mul,x21 = App x22 x6,x22 = ON Mul,x1 = App x2 x3,x3 = App x4 x6,x4 = App x5 x6,x6 = App x7 x9,x7 = App x8 x9,x9 = App x10 x12,x10 = App x11 x12,x12 = App x13 x15,x13 = App x14 x15,x15 = App x16 x19,x19 = ON 5,x16 = App x17 x18,x18 = ON 3,x17 = ON Add,x14 = ON Mul,x11 = ON Mul,x8 = ON Mul,x5 = ON Mul,x2 = ON Mul] in x0
+  > ssa e5
+  let x2 = Mul in let x5 = Mul in let x8 = Mul in let x11 = Mul in let x14 = Mul in let x17 = Add in let x18 = 3 in let x16 = (x17 x18) in let x19 = 5 in let x15 = (x16 x19) in let x13 = (x14 x15) in let x12 = (x13 x15) in let x10 = (x11 x12) in let x9 = (x10 x12) in let x7 = (x8 x9) in let x6 = (x7 x9) in let x4 = (x5 x6) in let x3 = (x4 x6) in let x1 = (x2 x3) in let x22 = Mul in let x21 = (x22 x6) in let x25 = Mul in let x24 = (x25 x9) in let x23 = (x24 x15) in let x20 = (x21 x23) in let x0 = (x1 x20) in x0
+  > cse e5
+  let x15 = ((Add 3) 5) in let x12 = ((Mul x15) x15) in let x9 = ((Mul x12) x12) in let x6 = ((Mul x9) x9) in ((Mul ((Mul x6) x6)) ((Mul x6) ((Mul x9) x15)))
+-}
