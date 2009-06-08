@@ -39,7 +39,6 @@ data StableBind ty h = forall a. StableBind (V ty a) (StableName (h a))
 -- | 'reifyGraph' takes a data structure that admits 'MuRef', and returns
 -- a 'Graph' that contains the dereferenced nodes, with their children as
 -- 'Integer' rather than recursive values.
-
 reifyGraph :: (IsTy ty, MuRef ty h) => ty a -> h a -> IO (Graph ty (DeRef h) a)
 reifyGraph tya ha = do rt1   <- newMVar M.empty
                        rt2   <- newMVar []
@@ -47,24 +46,11 @@ reifyGraph tya ha = do rt1   <- newMVar M.empty
                        binds <- readMVar rt2
                        return (Graph binds root)
 
--- mylookup' :: StableName a -> IntMap [(StableName a, b)] -> Maybe b
-
--- mylookup' st tab =
---    case M.lookup (hashStableName st) tab of
---      Just tab2 -> Prelude.lookup st tab2
---      Nothing   -> Nothing
-
--- mylookup' st tab =
---    M.lookup (hashStableName st) tab >>= Prelude.lookup st
-
 
 findNodes :: forall ty h a. (IsTy ty, MuRef ty h) 
           => MVar (IntMap [StableBind ty h])
           -> MVar [Bind ty (DeRef h)]
           -> ty a -> h a -> IO (V ty a)
-
--- findNodes = undefined
-
 findNodes rt1 rt2 tya ha =
   do nextI <- newMVar 0
      let newIndex = modifyMVar nextI (\ n -> return (n+1,n))

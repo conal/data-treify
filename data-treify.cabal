@@ -38,6 +38,7 @@ Library
   Exposed-modules:
        Data.TReify
        Data.Reify.TGraph
+       CustomTy
        Exp
   Ghc-Options:  -Wall
 

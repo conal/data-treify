@@ -16,10 +16,11 @@ module CustomTy (Ty(..),Typeable,ty, module Data.IsTy) where
 
 import Control.Applicative (liftA2)
 
+-- ty package
 import Data.Proof.EQ
 import Data.IsTy
 
--- Primitive types
+-- | Typed type representation.  Alternative to Data.Ty in the ty package
 data Ty a where
   Bool    :: Ty Bool
   Integer :: Ty Integer
@@ -36,10 +37,11 @@ instance IsTy Ty where
   tyEq _     _               = Nothing
 
 
+-- | Replacement for Typeable and the ty package's ty.
 class Typeable a where ty :: Ty a
 
-instance Typeable Bool                             where ty = Bool
-instance Typeable Integer                          where ty = Integer
-instance Typeable Float                            where ty = Float
+instance Typeable Bool                               where ty = Bool
+instance Typeable Integer                            where ty = Integer
+instance Typeable Float                              where ty = Float
 instance (Typeable a, Typeable b) => Typeable (a,b)  where ty = ty :*: ty
 instance (Typeable a, Typeable b) => Typeable (a->b) where ty = ty :->: ty
