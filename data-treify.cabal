@@ -33,12 +33,11 @@ build-type: 	     Simple
 Cabal-Version:       >= 1.6
 
 Library
-  Build-Depends: base, containers
+  Build-Depends: base, containers, ty
   Hs-Source-Dirs: src
   Exposed-modules:
-       Data.Proof.EQ
-       Data.Ty
        Data.TReify
+       Data.Reify.TGraph
        Exp
   Ghc-Options:  -Wall
 

@@ -52,3 +52,25 @@ data Graph n a = Graph [Bind n] (V a)
 --   mapDeRef :: (a -> IO          Int )
 --            -> (a -> IO (DeRef a Int))
 
+
+-- From Ty.hs, line 37, 06/07/2009 04:36:31 PM:
+
+
+tyEq :: Ty a -> Ty b -> Maybe (a :=: b)
+Ty a `tyEq` Ty b | a == b    = unsafeCoerce (Just Refl)
+                 | otherwise = Nothing
+
+ty :: Typeable a => Ty a
+ty = tyOf (undefined :: a)
+
+tyOf :: Typeable a => a -> Ty a
+tyOf a = Ty (typeOf a)
+
+-- From Ty.hs, line 36, 06/07/2009 04:37:13 PM:
+
+tyEq :: Ty a -> Ty b -> Maybe (a :=: b)
+Ty a `tyEq` Ty b | a == b    = unsafeCoerce (Just Refl)
+                 | otherwise = Nothing
+
+ty :: Typeable a => Ty a
+ty = tyOf (undefined :: a)
