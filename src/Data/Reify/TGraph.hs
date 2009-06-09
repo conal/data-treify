@@ -15,6 +15,8 @@ type Id = Int
 -- | Typed variables
 data V ty a = V Id (ty a)
 
+instance Eq (V ty a) where V i _ == V j _ = i == j
+
 -- | Typed binding pair, parameterized by variable and node type
 -- constructors. 
 data Bind ty n = forall a. Bind (V ty a) (n (V ty) a)
