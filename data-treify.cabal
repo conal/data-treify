@@ -1,5 +1,5 @@
 Name:               data-treify
-Version:            0.3
+Version:            0.3.1
 Synopsis:           Reify a recursive data structure into an explicit graph.
 Description:	    This package is a (probably temporary) fork of Andy gill's data-reify package.
 		    .
@@ -33,7 +33,7 @@ build-type: 	     Simple
 Cabal-Version:       >= 1.6
 
 Library
-  Build-Depends: base, containers, ty
+  Build-Depends: base<5, containers, ty
   Hs-Source-Dirs: src
   Exposed-modules:
        Data.TReify

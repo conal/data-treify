@@ -1,6 +1,6 @@
 {-# LANGUAGE UndecidableInstances, TypeFamilies, BangPatterns, Rank2Types
            , ExistentialQuantification, PatternGuards, ScopedTypeVariables
-           , MultiParamTypeClasses
+           , MultiParamTypeClasses, GADTs
   #-}
 {-# OPTIONS_GHC -Wall #-}
 
@@ -14,9 +14,9 @@ module Data.TReify (
         ) where
 
 import Control.Concurrent.MVar
-import Control.Monad
-import Control.Applicative
-import System.Mem.StableName
+-- import Control.Monad
+import Control.Applicative (Applicative)
+import System.Mem.StableName (StableName, makeStableName, hashStableName)
 import Data.IntMap as M
 
 import Data.IsTy
