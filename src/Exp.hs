@@ -4,6 +4,9 @@
   #-}
 {-# OPTIONS_GHC -Wall -fno-warn-missing-methods -fno-warn-missing-signatures #-}
 
+-- Example of data-treify for a first pass of CSE on a simple typed
+-- language representation.
+
 module Exp where
 
 import Control.Applicative (pure,(<$>),(<*>))
@@ -193,7 +196,7 @@ op2 h a b = Op h :^ a :^ b
 
 instance Eq (E v a)
 
-instance (Typeable a, Num a) => Num (E (V Ty) a) where
+instance (Typeable a, Show a, Num a) => Num (E (V Ty) a) where
   fromInteger x = Op (Lit (fromInteger x))
   (+) = op2 Add
   (*) = op2 Mul
