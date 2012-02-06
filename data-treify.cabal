@@ -2,6 +2,7 @@ Name:               data-treify
 Version:            0.3.2
 Synopsis:           Reify a recursive data structure into an explicit graph.
 Description:	    This package is a (probably temporary) fork of Andy gill's data-reify package.
+                    I've tweaked it for typed syntax representations for use with GADTs.
 		    .
 		    'data-reify' provided the ability to turn recursive structures into explicit graphs. 
 		    Many (implicitly or explicitly) recursive data structure can be given this ability, via
