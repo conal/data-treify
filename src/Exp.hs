@@ -20,7 +20,7 @@ import Data.Proof.EQ
 import Data.Ty
 -- import CustomTy
 
-import Data.TReify
+import Data.TReify (MuRef(..),ShowF(..),V(..),Graph(..),Bind(..),Id,reifyGraph)
 
 {--------------------------------------------------------------------
     Expressions
@@ -56,16 +56,22 @@ instance ShowF v => ShowF (N v) where
   showF (ON o)    = unwords ["ON" ,showF o]
   showF (App a b) = unwords ["App",showF a,showF b]
 
-instance Show (E (V Ty) a) where
+-- instance Show (E (V Ty) a) where
+--   show (Op o) = show o
+--   show (u :^ v) = parens $ unwords [show u,show v]
+--   show (Let v a b) = unwords ["let",show v,"=",show a,"in",show b]
+--   show (Var v) = show v
+
+instance ShowF v => Show (E v a) where
   show (Op o) = show o
   show (u :^ v) = parens $ unwords [show u,show v]
-  show (Let v a b) = unwords ["let",show v,"=",show a,"in",show b]
-  show (Var v) = show v
-
+  show (Let v a b) = unwords ["let",showF v,"=",show a,"in",show b]
+  show (Var v) = showF v
 
 parens :: String -> String
 parens = ("(" ++) . (++ ")")
 
+-- TODO: showsPrec with infix and minimal parens
 
 instance MuRef Ty (E v) where
   type DeRef (E v) = N

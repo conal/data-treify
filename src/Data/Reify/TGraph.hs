@@ -1,13 +1,18 @@
 {-# LANGUAGE GADTs, ExistentialQuantification, FlexibleContexts
-           , UndecidableInstances
+           , UndecidableInstances, PatternGuards
   #-}
+{-# LANGUAGE ScopedTypeVariables #-} -- for bindEnv
+
 {-# OPTIONS_GHC -Wall #-}
 
 module Data.Reify.TGraph
-  ( ShowF(..), Id, V(..), Bind(..), Graph(..)
+  ( ShowF(..), Id, V(..), Bind(..), bindEnv, Graph(..)
   ) where
 
--- import Data.IsTy
+-- For bindEnv
+import Data.IsTy
+import Data.Proof.EQ
+import qualified Data.IntMap as I
 
 -- | Identifiers
 type Id = Int
@@ -16,10 +21,6 @@ type Id = Int
 data V ty a = V Id (ty a)
 
 instance Eq (V ty a) where V i _ == V j _ = i == j
-
--- | Typed binding pair, parameterized by variable and node type
--- constructors. 
-data Bind ty n = forall a. Bind (V ty a) (n (V ty) a)
 
 class ShowF f where
   showF :: f a -> String                -- maybe Show a => 
@@ -35,6 +36,33 @@ instance Show (V ty a) where show = showF
 
 instance ShowF (n (V ty)) => Show (Bind ty n) where
   show (Bind v n) = showF v ++" = "++ showF n
+
+-- | Typed binding pair, parameterized by variable and node type
+-- constructors. 
+data Bind ty n = forall a. Bind (V ty a) (n (V ty) a)
+
+{-
+-- Slow version
+bindEnv' :: IsTy ty => [Bind ty n] -> (V ty a -> n (V ty) a)
+bindEnv' [] _ = error "bindEnv': ran out of bindings"
+bindEnv' (Bind (V i a) n : binds') v@(V i' a')
+  | Just Refl <- a `tyEq` a', i == i' = n
+  | otherwise                         = bindEnv' binds' v
+-}
+
+-- | Fast version, using an IntMap.
+-- Important: partially apply.
+bindEnv :: forall ty n a. IsTy ty => [Bind ty n] -> (V ty a -> n (V ty) a)
+bindEnv binds = \ (V i' a') -> extract a' (I.lookup i' m)
+ where
+   m :: I.IntMap (Bind ty n)
+   m = I.fromList [(i,b) | b@(Bind (V i _) _) <- binds]
+   extract :: ty a' -> Maybe (Bind ty n) -> n (V ty) a'
+   extract _ Nothing            = error "bindEnv: variable not found"
+   extract a' (Just (Bind (V _ a) n))
+     | Just Refl <- a `tyEq` a' = n
+     | otherwise                = error "bindEnv: wrong type"
+
 
 -- | Graph, described by bindings and a root variable
 data Graph ty n a = Graph [Bind ty n] (V ty a)

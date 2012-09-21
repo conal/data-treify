@@ -1,5 +1,5 @@
 Name:               data-treify
-Version:            0.3.2
+Version:            0.3.3
 Synopsis:           Reify a recursive data structure into an explicit graph.
 Description:	    This package is a (probably temporary) fork of Andy gill's data-reify package.
                     I've tweaked it for typed syntax representations for use with GADTs.
@@ -20,14 +20,14 @@ Description:	    This package is a (probably temporary) fork of Andy gill's data
 		    Version 0.3 provided two versions of 'MuRef', the mono-typed version, for trees of a single type,
 		    and the dynamic-typed version, for trees of different types.
 		    .
-		    &#169; 2009 Andy Gill; BSD3 license.
+		    &#169; 2009-2012 Andy Gill & Conal Elliott; BSD3 license.
 
 Category:            Language, Data, Parsing, Reflection 
 License:             BSD3
 License-file:        LICENSE
-Author:              Andy Gill
-Maintainer:          Andy Gill <andygill@ku.edu>
-Copyright:           (c) 2009 Andy Gill
+Author:              Andy Gill & Conal Elliott
+Maintainer:          Conal Elliott <conal@conal.net>
+Copyright:           (c) 2009-2012 Andy Gill and Conal Elliott
 Homepage:            http://ittc.ku.edu/~andygill/data-reify.php
 Stability:	     alpha
 build-type: 	     Simple
@@ -43,50 +43,3 @@ Library
        CustomTy
        Exp
   Ghc-Options:  -Wall
-
-
--- Library
---   Build-Depends: base, containers
---   Hs-Source-Dirs: src
---   Exposed-modules:
---        Data.Reify,
---        Data.Dynamic.Reify,
---        Data.Reify.Graph
---   Ghc-Options:  -Wall
-
-
--- Executable data-reify-test1
---   Build-Depends:  base
---   Main-Is:        Test1.hs
---   Hs-Source-Dirs: ., test
---   buildable: False
-
--- Executable data-reify-test2
---   Build-Depends:  base
---   Main-Is:        Test2.hs
---   Hs-Source-Dirs: ., test
---   buildable: False
-
--- Executable data-reify-test3
---   Build-Depends:  base
---   Main-Is:        Test3.hs
---   Hs-Source-Dirs: ., test
---   buildable: False
-
--- Executable data-reify-test4
---   Build-Depends:  base
---   Main-Is:        Test4.hs
---   Hs-Source-Dirs: ., test
---   buildable: False
-
--- Executable data-reify-test5
---   Build-Depends:  base
---   Main-Is:        Test5.hs
---   Hs-Source-Dirs: ., test
---   buildable: False
-
--- Executable data-reify-test6
---   Build-Depends:  base
---   Main-Is:        Test6.hs
---   Hs-Source-Dirs: ., test
---   buildable: False
