@@ -34,12 +34,12 @@ instance ShowF (V ty) where
 
 instance Show (V ty a) where show = showF
 
-instance ShowF (n (V ty)) => Show (Bind ty n) where
-  show (Bind v n) = showF v ++" = "++ showF n
-
 -- | Typed binding pair, parameterized by variable and node type
 -- constructors. 
 data Bind ty n = forall a. Bind (V ty a) (n (V ty) a)
+
+instance ShowF (n (V ty)) => Show (Bind ty n) where
+  show (Bind v n) = showF v ++" = "++ showF n
 
 {-
 -- Slow version

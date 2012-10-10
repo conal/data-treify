@@ -83,3 +83,6 @@ mylookup tya sta tab =
    llookup (StableBind v@(V _ tyb) stb : binds') 
      | Just Refl <- tya `tyEq` tyb, sta == stb = Just v
      | otherwise                               = llookup binds'
+
+-- unsafeReify :: (IsTy ty, MuRef ty h) => ty a -> h a -> Graph ty (DeRef h) a
+-- unsafeReify = unsafePerformIO . reifyGraph
