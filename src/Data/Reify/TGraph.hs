@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs, ExistentialQuantification, FlexibleContexts
            , UndecidableInstances, PatternGuards
   #-}
-{-# LANGUAGE ScopedTypeVariables #-} -- for bindEnv
+{-# LANGUAGE ScopedTypeVariables, ConstraintKinds, Rank2Types #-} -- for bindEnv
 
 {-# OPTIONS_GHC -Wall #-}
 
@@ -36,7 +36,7 @@ instance Show (V ty a) where show = showF
 
 -- | Typed binding pair, parameterized by variable and node type
 -- constructors. 
-data Bind ty n = forall a. Bind (V ty a) (n (V ty) a)
+data Bind ty n = forall a. IsTyConstraint ty a => Bind (V ty a) (n (V ty) a)
 
 instance ShowF (n (V ty)) => Show (Bind ty n) where
   show (Bind v n) = showF v ++" = "++ showF n
@@ -52,17 +52,23 @@ bindEnv' (Bind (V i a) n : binds') v@(V i' a')
 
 -- | Fast version, using an IntMap.
 -- Important: partially apply.
-bindEnv :: forall ty n a. IsTy ty => [Bind ty n] -> (V ty a -> n (V ty) a)
+bindEnv :: forall ty n. [Bind ty n] -> 
+             forall a. (IsTy ty, IsTyConstraint ty a) => 
+               (V ty a -> n (V ty) a)
 bindEnv binds = \ (V i' a') -> extract a' (I.lookup i' m)
  where
    m :: I.IntMap (Bind ty n)
    m = I.fromList [(i,b) | b@(Bind (V i _) _) <- binds]
-   extract :: ty a' -> Maybe (Bind ty n) -> n (V ty) a'
+--    extract :: forall a'. IsTyConstraint ty a' => 
+--               ty a' -> Maybe (Bind ty n) -> n (V ty) a'
+   extract :: IsTyConstraint ty a => 
+              ty a -> Maybe (Bind ty n) -> n (V ty) a
    extract _ Nothing            = error "bindEnv: variable not found"
    extract a' (Just (Bind (V _ a) n))
      | Just Refl <- a `tyEq` a' = n
      | otherwise                = error "bindEnv: wrong type"
 
+-- TODO: Does the partial application *really* avoid the IntMap reconstruction?
 
 -- | Graph, described by bindings and a root variable
 data Graph ty n a = Graph [Bind ty n] (V ty a)
